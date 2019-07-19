@@ -1,7 +1,11 @@
 package com.ivsucic.shorting.url.service;
 
+import java.util.AbstractMap;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,27 +23,31 @@ public class ShortingUrlService {
 	private AccountDao accountDao;
 	@Autowired
 	private ShortingUrlDao shortingDao;
-	
+
 	public RegisterUrlResponse registerUrl(String authorization, RegisterUrlReq regUrlReq) {
 		RegisterUrlResponse regUrlResponse = new RegisterUrlResponse();
 		regUrlResponse.setShortUrl(null);
 		String accountId = this.authenticateUser(authorization);
-		if ( accountId != null) {
+		if (accountId != null) {
 			ShortingUrl shortingUrl = new ShortingUrl();
-			
+
 			shortingUrl.setAccountId(accountId);
 			shortingUrl.setOriginalUrl(regUrlReq.url);
-			shortingUrl.setRedirectType(regUrlReq.redirectType);
+			if (regUrlReq.url == null) {
+				shortingUrl.setRedirectType(302);
+			} else {
+				shortingUrl.setRedirectType(regUrlReq.redirectType);
+			}
 			String hash = Integer.toString(regUrlReq.url.hashCode());
 			String shortUrl = "/shorted/" + hash;
 			shortingUrl.setShortUrl(shortUrl);
 			shortingDao.save(shortingUrl);
-			
+
 			regUrlResponse.setShortUrl(shortUrl);
 		}
 		return regUrlResponse;
 	}
-	
+
 	// if successfully authenticated the user return accountId else null
 	private String authenticateUser(String authorization) {
 		if (authorization.startsWith("Basic ")) {
@@ -47,7 +55,7 @@ public class ShortingUrlService {
 			String decoded = new String(Base64.getDecoder().decode(encoded));
 			Integer indexColon = decoded.indexOf(":");
 			String accountId = decoded.substring(0, indexColon);
-			String password = decoded.substring(indexColon+1, decoded.length());
+			String password = decoded.substring(indexColon + 1, decoded.length());
 			Optional<Account> account = accountDao.findById(accountId);
 			if (account.isEmpty()) {
 				return null;
@@ -61,5 +69,23 @@ public class ShortingUrlService {
 		} else {
 			return null;
 		}
+	}
+
+	public Map<String, Integer> getStatistics(String authorization, String accountId) {
+		Map<String, Integer> hitCounts = new TreeMap<String, Integer>();
+
+		String accountId2 = this.authenticateUser(authorization);
+		if (accountId2 != null && accountId.equals(accountId2)) {
+			List<ShortingUrl> shortingUrls = shortingDao.findShortingUrlByAccountId(accountId2);
+			for (ShortingUrl shortingUrl : shortingUrls) {
+				Map.Entry<String, Integer> entry = newEntry(shortingUrl.getOriginalUrl(), shortingUrl.getHitCount());
+				hitCounts.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return hitCounts;
+	}
+
+	private static <K, V> Map.Entry<K, V> newEntry(K key, V value) {
+		return new AbstractMap.SimpleEntry<>(key, value);
 	}
 }
