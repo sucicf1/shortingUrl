@@ -2,6 +2,8 @@ package com.ivsucic.shorting.url.controller;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,5 +32,10 @@ public class ShortingUrlController {
 	public @ResponseBody Map<String, Integer> getStatistics(@RequestHeader("Authorization") String authorization, 
 															@PathVariable("AccountId") String AccountId)  {
 		return shortingUrlService.getStatistics(authorization, AccountId);
+	}
+	
+	@GetMapping(value="/shorted/{hash}")
+	public void shortedRedirect(@PathVariable("hash") String hash, HttpServletResponse httpServletResponse) {
+		shortingUrlService.setRedirectResponse(hash, httpServletResponse);
 	}
 }

@@ -43,8 +43,8 @@ public class ShortingUrl {
 	public Integer getHitCount() {
 		return hitCount;
 	}
-	public void setHitCount(Integer hitCount) {
-		this.hitCount = hitCount;
+	public void increaseHitCountByOne() {
+		++this.hitCount;
 	}
 	public Integer getRedirectType() {
 		return redirectType;

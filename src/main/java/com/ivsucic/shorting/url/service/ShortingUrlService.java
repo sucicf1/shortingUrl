@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -87,5 +88,13 @@ public class ShortingUrlService {
 
 	private static <K, V> Map.Entry<K, V> newEntry(K key, V value) {
 		return new AbstractMap.SimpleEntry<>(key, value);
+	}
+
+	public void setRedirectResponse(String hash, HttpServletResponse httpServletResponse) {
+		ShortingUrl shortingUrl = shortingDao.findShortingUrlByShortUrl("/shorted/" + hash);
+		shortingUrl.increaseHitCountByOne();
+		shortingDao.save(shortingUrl);
+		httpServletResponse.setHeader("Location", shortingUrl.getOriginalUrl());
+	    httpServletResponse.setStatus(shortingUrl.getRedirectType());
 	}
 }

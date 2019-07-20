@@ -7,5 +7,5 @@ import com.ivsucic.shorting.url.entities.ShortingUrl;;
 
 public interface ShortingUrlDao extends CrudRepository<ShortingUrl,String> {
 	List<ShortingUrl> findShortingUrlByAccountId(String AccountId);
-	//ShortingUrl findByShortUrl(String shortUrl);
+	ShortingUrl findShortingUrlByShortUrl(String shortUrl);
 }
