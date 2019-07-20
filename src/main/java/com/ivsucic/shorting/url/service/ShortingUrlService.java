@@ -38,7 +38,7 @@ public class ShortingUrlService {
 
 			shortingUrl.setAccountId(accountId);
 			shortingUrl.setOriginalUrl(regUrlReq.url);
-			if (regUrlReq.url == null) {
+			if (regUrlReq.redirectType != 301 && regUrlReq.redirectType != 302) {
 				shortingUrl.setRedirectType(302);
 			} else {
 				shortingUrl.setRedirectType(regUrlReq.redirectType);
