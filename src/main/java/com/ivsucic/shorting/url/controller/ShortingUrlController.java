@@ -2,6 +2,7 @@ package com.ivsucic.shorting.url.controller;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +24,10 @@ public class ShortingUrlController {
 	private ShortingUrlService shortingUrlService;
 	
 	@PostMapping(value="/register", produces = "application/json")
-	public @ResponseBody RegisterUrlResponse registerUrl(@RequestHeader("Authorization") String authorization, 
+	public @ResponseBody RegisterUrlResponse registerUrl(HttpServletRequest request,
+														 @RequestHeader("Authorization") String authorization, 
 														 @RequestBody RegisterUrlReq regUrlReq)  {
-		return shortingUrlService.registerUrl(authorization, regUrlReq);
+		return shortingUrlService.registerUrl(request, authorization, regUrlReq);
 	}
 	
 	@GetMapping(value="/statistic/{AccountId}", produces = "application/json")
@@ -34,7 +36,7 @@ public class ShortingUrlController {
 		return shortingUrlService.getStatistics(authorization, AccountId);
 	}
 	
-	@GetMapping(value="/shorted/{hash}")
+	@GetMapping(value="/s/{hash}")
 	public void shortedRedirect(@PathVariable("hash") String hash, HttpServletResponse httpServletResponse) {
 		shortingUrlService.setRedirectResponse(hash, httpServletResponse);
 	}

@@ -1,11 +1,15 @@
 package com.ivsucic.shorting.url.service;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.AbstractMap;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +29,7 @@ public class ShortingUrlService {
 	@Autowired
 	private ShortingUrlDao shortingDao;
 
-	public RegisterUrlResponse registerUrl(String authorization, RegisterUrlReq regUrlReq) {
+	public RegisterUrlResponse registerUrl(HttpServletRequest request, String authorization, RegisterUrlReq regUrlReq) {
 		RegisterUrlResponse regUrlResponse = new RegisterUrlResponse();
 		regUrlResponse.setShortUrl(null);
 		String accountId = this.authenticateUser(authorization);
@@ -40,11 +44,18 @@ public class ShortingUrlService {
 				shortingUrl.setRedirectType(regUrlReq.redirectType);
 			}
 			String hash = Integer.toString(regUrlReq.url.hashCode());
-			String shortUrl = "/shorted/" + hash;
+			String shortUrl = "/s/" + hash;
 			shortingUrl.setShortUrl(shortUrl);
 			shortingDao.save(shortingUrl);
 
-			regUrlResponse.setShortUrl(shortUrl);
+			try {
+				URL requestURL;
+				requestURL = new URL(request.getRequestURL().toString());
+				String port = requestURL.getPort() == -1 ? "" : ":" + requestURL.getPort();
+				regUrlResponse.setShortUrl(requestURL.getProtocol() + "://" + requestURL.getHost() + port + shortUrl);
+			} catch (MalformedURLException e) {
+				regUrlResponse.setShortUrl("Error");
+			}
 		}
 		return regUrlResponse;
 	}
@@ -91,7 +102,7 @@ public class ShortingUrlService {
 	}
 
 	public void setRedirectResponse(String hash, HttpServletResponse httpServletResponse) {
-		ShortingUrl shortingUrl = shortingDao.findShortingUrlByShortUrl("/shorted/" + hash);
+		ShortingUrl shortingUrl = shortingDao.findShortingUrlByShortUrl("/s/" + hash);
 		shortingUrl.increaseHitCountByOne();
 		shortingDao.save(shortingUrl);
 		httpServletResponse.setHeader("Location", shortingUrl.getOriginalUrl());
